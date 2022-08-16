@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "slack-twitter-reports"
+version = "0.1.0"
+description = "Use slack notifications from sources to automatically create an incident report and find priginal source on twitter"
+authors = ["Death916 <tavn1992@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+slack-bolt = "^1.14.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

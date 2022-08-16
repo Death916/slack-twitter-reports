@@ -1,46 +1,52 @@
 #samdesk-alerts
 
-from asyncore import read
-from gzip import READ
-import re
-from slack_sdk import WebClient
+
+
+from email.message import Message
 import os
 import json
 
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+# Read the environment variables
+SLACK_TOKEN = os.environ["SLACK_API_TOKEN"]
+#SLACK_CHANNEL = os.environ["SLACK_CHANNEL"]
+SLACK_ALERT_SOCKET = os.environ["SLACK_ALERT_SOCKET"]
+
+# Install the Slack app and get xoxb- token in advance
+app = App(token=SLACK_ALERT_SOCKET)
+ 
+CURRENT_MESSAGE = ""
 def main():
-    # Read the environment variables
-    SLACK_TOKEN = os.environ["SLACK_API_TOKEN"]
-    SLACK_CHANNEL = os.environ["SLACK_CHANNEL"]
-    
-    
-    # Create a WebClient for sending messages to Slack
-    slack_client = WebClient(token=SLACK_TOKEN)
-
-    class slack():
-        def __init__(self, slack_client, SLACK_CHANNEL, SLACK_USERNAME):
-            self.slack_client = slack_client
-            self.SLACK_CHANNEL = SLACK_CHANNEL
-            
-
-        
-        def read_messages():
-            # Read the messages from the Slack channel
-            response = slack_client.conversations_list()
-            channel = response["channels"]
-          
-            print(messages)
-
-            return messages[0]
-        
-    slack.read_messages()
+    new_message = handle_message_events(app)
+    parse_message(new_message)
 
 
-    class twitter(): 
-        # Read the environment variables
 
-        #search for headlines
-        def search_headlines(self):
-            pass
+# Listen for incoming messages
+@app.event("message")
+def handle_message_events(body, logger):
+    logger.info(body)
+    message = body["event"]["text"]
+    # Get the channel ID
+    event_id = body.get("event_id")
+    print(message)
+    print(event_id)
+    print("here")
+    CURRENT_MESSAGE = message
+    return(CURRENT_MESSAGE)
 
+
+def parse_message(CURRENT_MESSAGE):
+   
+    print("here2")
+    print(CURRENT_MESSAGE.split(" ")[0] + " this is the message")
+    return(CURRENT_MESSAGE)
+
+#
+# Start your app
 if __name__ == "__main__":
+    SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start()
     main()
+    
