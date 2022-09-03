@@ -1,8 +1,9 @@
 #samdesk-alerts
 
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing.pool import ThreadPool
 import time
 import os
-import json
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import make_report as mr
@@ -15,19 +16,15 @@ SLACK_ALERT_SOCKET = os.environ["SLACK_ALERT_SOCKET"]
 # Install the Slack app and get xoxb- token in advance
 app = App(token=SLACK_ALERT_SOCKET)
  
-CURRENT_MESSAGE = ""
+CURRENT_MESSAGE = "hi"
 LOOP = 0
-
-def main():
-    new_message = handle_message_events(app)
-    parse_message(new_message)
 
 
 
 # Listen for incoming messages
 @app.event("message")
-def handle_message_events(body, logger):
-    logger.info(body)
+def handle_message_events(body, **kwargs):
+    #logger.info(body)
     message = body["event"]["text"]
     
     # Get the channel ID
@@ -41,9 +38,9 @@ def handle_message_events(body, logger):
     report = mr.samreport(time.asctime() + ".txt")
     # store message in report file
     report.raw_alert(message)
+    global CURRENT_MESSAGE
     CURRENT_MESSAGE = message
-    return(CURRENT_MESSAGE)
-
+import threading
 
 def parse_message(CURRENT_MESSAGE):
    
@@ -51,18 +48,30 @@ def parse_message(CURRENT_MESSAGE):
     print(CURRENT_MESSAGE.split(" ")[0] + " this is the message")
     return(CURRENT_MESSAGE)
 
-
 def main():
-     while True:
-        handle_message_events()
-        parse_message()
-        LOOP += 1
-        print(LOOP)
-
+    global CURRENT_MESSAGE
+    while True:
+            msg = CURRENT_MESSAGE
+            print("here3")
+            print(CURRENT_MESSAGE)
+            parse_message(msg)
+            CURRENT_MESSAGE = ""
+            time.sleep(10)
+    
+    
 
 
 # Start your app
-if __name__ == "__main__":
-    SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start()
-    main()
+
+    
+with ThreadPoolExecutor(max_workers=3) as executor:
+    while True:
+        executor.submit(main)
+        
+        
+        #executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
+    
+
+ 
+   
     
