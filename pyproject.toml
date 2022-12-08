@@ -7,6 +7,8 @@ authors = ["Death916 <tavn1992@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 slack-bolt = "^1.14.0"
+gensim = "3.8"
+spacy = "^3.4.3"
 
 [tool.poetry.dev-dependencies]
 

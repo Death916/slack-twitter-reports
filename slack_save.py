@@ -7,6 +7,9 @@ import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import make_report as mr
+import threading
+import gensim
+
 
 
 # Read the environment variables
@@ -40,13 +43,15 @@ def handle_message_events(body, **kwargs):
     report.raw_alert(message)
     global CURRENT_MESSAGE
     CURRENT_MESSAGE = message
-import threading
+
 
 def parse_message(CURRENT_MESSAGE):
    
     print("here2")
     print(CURRENT_MESSAGE.split(" ")[0] + " this is the message")
     return(CURRENT_MESSAGE)
+
+def summary():
 
 def main():
     global CURRENT_MESSAGE
@@ -66,10 +71,10 @@ def main():
     
 with ThreadPoolExecutor(max_workers=3) as executor:
     while True:
-        executor.submit(main)
+        #executor.submit(main)
         
         
-        #executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
+        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
     
 
  
