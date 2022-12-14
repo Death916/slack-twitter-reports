@@ -33,26 +33,27 @@ def handle_message_events(body, **kwargs):
     # Get the channel ID
     event_id = body.get("event_id")
 
+# debug
     print(message)
     print(event_id)
     print("here")
-    
-    # store message id for title
+# debug
+
+    # initialize report class and create file name
+
     report = mr.samreport(time.asctime() + ".txt")
+
     # store message in report file
+    # alert variable set in report class by raw_alert method
     report.raw_alert(message)
-    global CURRENT_MESSAGE
-    CURRENT_MESSAGE = message
+    
+    summ = report.make_summary(message)
+    print(summ)
+    #report.makereport()
 
 
-def parse_message(CURRENT_MESSAGE):
-   
-    print("here2")
-    print(CURRENT_MESSAGE.split(" ")[0] + " this is the message")
-    return(CURRENT_MESSAGE)
 
-def summary():
-
+"""
 def main():
     global CURRENT_MESSAGE
     while True:
@@ -60,23 +61,26 @@ def main():
             print("here3")
             print(CURRENT_MESSAGE)
             parse_message(msg)
+            #print(summ)
+
             CURRENT_MESSAGE = ""
             time.sleep(10)
+            print(time.asctime())
     
-    
+"""    
 
 
 # Start your app
 
     
-with ThreadPoolExecutor(max_workers=3) as executor:
+with ThreadPoolExecutor(max_workers=5) as executor:
     while True:
-        #executor.submit(main)
+        #executor.submit(main()).start()
         
         
-        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
+        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start(), main()).start()
     
-
+       
  
    
     
