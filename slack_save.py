@@ -6,10 +6,7 @@ import time
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-import make_report as mr
-import threading
-import gensim
-
+from make_report import samreport
 
 
 # Read the environment variables
@@ -40,37 +37,31 @@ def handle_message_events(body, **kwargs):
 # debug
 
     # initialize report class and create file name
+    report_title = time.asctime() + ".txt"
+    
+    report_title = report_title.replace(" ", "-") #replace spaces in file name with hyphens 
 
-    report = mr.samreport(time.asctime() + ".txt")
+    
+    report = samreport(report_title, message)
 
     # store message in report file
     # alert variable set in report class by raw_alert method
-    report.raw_alert(message)
+    report.store_raw_alert(message)
     
-    summ = report.make_summary(message)
-    print(summ)
+
+    # generate summary
+     
+    summ = report.make_summary()
+    print("summary: " + summ)
+    
+    tokens = report.tokenize()
+    print(tokens)
+    incident_type = report.set_incident()
+    print(incident_type)
     #report.makereport()
 
+    # send summary 
 
-
-"""
-def main():
-    global CURRENT_MESSAGE
-    while True:
-            msg = CURRENT_MESSAGE
-            print("here3")
-            print(CURRENT_MESSAGE)
-            parse_message(msg)
-            #print(summ)
-
-            CURRENT_MESSAGE = ""
-            time.sleep(10)
-            print(time.asctime())
-    
-"""    
-
-
-# Start your app
 
     
 with ThreadPoolExecutor(max_workers=5) as executor:
@@ -78,7 +69,7 @@ with ThreadPoolExecutor(max_workers=5) as executor:
         #executor.submit(main()).start()
         
         
-        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start(), main()).start()
+        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
     
        
  
