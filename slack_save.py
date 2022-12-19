@@ -18,6 +18,7 @@ app = App(token=SLACK_ALERT_SOCKET)
  
 CURRENT_MESSAGE = "hi"
 LOOP = 0
+DEBUG = True
 
 
 
@@ -30,11 +31,8 @@ def handle_message_events(body, **kwargs):
     # Get the channel ID
     event_id = body.get("event_id")
 
-# debug
-    print(message)
     print(event_id)
-    print("here")
-# debug
+
 
     # initialize report class and create file name
     report_title = time.asctime() + ".txt"
@@ -47,18 +45,11 @@ def handle_message_events(body, **kwargs):
     # store message in report file
     # alert variable set in report class by raw_alert method
     report.store_raw_alert(message)
-    
+ 
+    if DEBUG == True:
+        report.debug()
 
-    # generate summary
-     
-    summ = report.make_summary()
-    print("summary: " + summ)
     
-    tokens = report.tokenize()
-    print(tokens)
-    incident_type = report.set_incident()
-    print(incident_type)
-    #report.makereport()
 
     # send summary 
 
