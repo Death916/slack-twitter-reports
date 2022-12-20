@@ -6,7 +6,7 @@ import time
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from make_report import samreport
+from make_report import SamReport
 
 
 # Read the environment variables
@@ -40,7 +40,7 @@ def handle_message_events(body, **kwargs):
     report_title = report_title.replace(" ", "-") #replace spaces in file name with hyphens 
 
     
-    report = samreport(report_title, message)
+    report = SamReport(report_title, message)
 
     # store message in report file
     # alert variable set in report class by raw_alert method

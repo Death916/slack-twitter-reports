@@ -1,9 +1,11 @@
 import gensim
 import time
 import spacy
+import os
+import tweepy
 """ Creating reports from samdesk alerts"""
 
-class samreport():
+class SamReport():
     def __init__(self, file_name, alert_txt):
         self.alert_txt = alert_txt
         self.nlp = spacy.load("en_core_web_sm")
@@ -18,6 +20,7 @@ class samreport():
         self.time_stamp = time.asctime() #time stamp for report file name
         self.tokens = "" #tokens from alert_txt
         self.location = "" #location of incident
+        self.distance = "" #distance from incident
         self.debug_active = True
 
     def store_raw_alert(self, alert_txt):
@@ -63,7 +66,7 @@ class samreport():
         
 
         try:
-            self.summary = gensim.summarization.summarize(self.alert_txt, ratio=0.7)
+            self.summary = gensim.summarization.summarize(self.alert_txt, ratio=0.6)
             if self.summary == "":
                 self.summary = self.alert_txt
         
@@ -90,7 +93,11 @@ class samreport():
             impact = "Police Presence"
         if inc_type == "Hazmat Incident".lower():
             impact = "Police Presence, Possible evacuation"
-        
+        if inc_type == "Police Activity".lower():
+            impact = "Police Presence"
+
+        #TODO: put individual impact statements in a dictionary
+
         self.impact = impact
         return self.impact
 
@@ -113,13 +120,14 @@ class samreport():
                 
             elif ent.label_ == "ORG":
                 self.distance += ent.text
-                print("distance: " + self.distance)
+                self.location = ent.text
                 break
         
         return self.distance
 
     def set_location(self):
-        pass
+        self.location = self.location
+        return self.location
 
     def set_variables(self):
         # helper function to set all variables
@@ -131,7 +139,7 @@ class samreport():
         self.set_distance()
         self.set_location()
         self.make_summary()
-        
+        self.tokenize()
                
 
 
@@ -151,6 +159,8 @@ class samreport():
         print("raw_file: " + self.raw_file)
         print("report_file: " + self.report_file)
         print("time_stamp: " + self.time_stamp)
+        print("distance: " + self.distance)
+        print("location: " + self.location)
        
     
 
@@ -164,3 +174,32 @@ class samreport():
             f.close()
             print("report completed")
 
+class TwitterSearch():
+    def __init__(self, input_txt):
+        self.twitter_token = os.environ["twitter_token"]
+        self.current_tweet_id = ""
+        self.current_user_name = ""
+        self.search_term = input_txt
+
+    def search_twitter(self, search_term):
+        #search twitter for part of alert_txt and return most recent tweet. use v2 twitter api with tweepy
+        client = tweepy.Client(self.twitter_token)
+        response = client.search_tweets(search_term, expansions="author_id", tweet_fields="created_at")
+        most_recent_username = response[0]['users'][0]['username']
+        most_recent_tweet_id = response[0]['id']
+        self.current_tweet_id = most_recent_tweet_id
+        self.current_user_name = most_recent_username
+        return most_recent_username, most_recent_tweet_id
+
+    def create_tweet_link(self, *kwargs):
+        """
+        This function takes username and tweet_id of a tweet and returns a link for the tweet.
+        Parameters
+        ----------
+        username : username for the tweet(string)
+        tweet_id : unique tweet id associated with each twitt.  (string)
+        """
+        username = self.current_user_name
+        tweet_id = self.current_tweet_id
+        tweet_url = f"https://twitter.com/{username}/status/{tweet_id}"
+        return tweet_url
