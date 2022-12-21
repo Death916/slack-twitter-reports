@@ -18,51 +18,65 @@ app = App(token=SLACK_ALERT_SOCKET)
  
 CURRENT_MESSAGE = "hi"
 LOOP = 0
-DEBUG = True
+DEBUG = False
+input = input("debug? (y/n): ")
+if input == "y":
+    DEBUG = True
+    print("debugging")
+else:
+    print("not debugging")
 
-
-
-# Listen for incoming messages
-@app.event("message")
-def handle_message_events(body, **kwargs):
-    #logger.info(body)
-    message = body["event"]["text"]
-    
-    # Get the channel ID
-    event_id = body.get("event_id")
-
-    print(event_id)
-
-
-    # initialize report class and create file name
-    report_title = time.asctime() + ".txt"
-    
-    report_title = report_title.replace(" ", "-") #replace spaces in file name with hyphens 
-
-    
-    report = SamReport(report_title, message)
-
-    # store message in report file
-    # alert variable set in report class by raw_alert method
-    report.store_raw_alert(message)
- 
-    if DEBUG == True:
-        report.debug()
-
+class slack_save:
     
 
-    # send summary 
-
-
-    
-with ThreadPoolExecutor(max_workers=5) as executor:
-    while True:
-        #executor.submit(main()).start()
-        
-        
-        executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
-    
-       
- 
    
+
+    # Listen for incoming messages
+    @app.event("message")
+    def handle_message_events(body, **kwargs):
+        #logger.info(body)
+        message = body["event"]["text"]
+        
+        # Get the channel ID
+        event_id = body.get("event_id")
+
+        print(event_id)
+
+
+        # initialize report class and create file name
+        report_title = time.asctime() + ".txt"
+        
+        report_title = report_title.replace(" ", "-") #replace spaces in file name with hyphens 
+
+        
+        report = SamReport(report_title, message)
+
+        # store message in report file
+        # alert variable set in report class by raw_alert method
+        report.store_raw_alert(message)
+
     
+        if DEBUG == True:
+            report.debug()
+
+       
+
+        # send summary 
+
+
+        
+
+if __name__ == "__main__":
+    
+        
+     with ThreadPoolExecutor(max_workers=5) as executor:
+            while True:
+            #executor.submit(main()).start()
+            
+            
+                executor.submit(SocketModeHandler(app, os.environ["SLACK_ALERT_SOCKET"]).start())
+        
+        
+    
+    
+        
