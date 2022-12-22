@@ -96,6 +96,14 @@ test = ["Morfessor (==2.0.2a4)", "annoy", "cython", "keras (>=2.0.4,<=2.1.4)", "
 test-win = ["Morfessor (==2.0.2a4)", "cython", "mock", "pytest", "pytest-rerunfailures", "python-Levenshtein (>=0.10.2)", "scikit-learn", "testfixtures", "visdom (>=0.1.8,!=0.1.8.7)"]
 
 [[package]]
+name = "hashlib"
+version = "20081119"
+description = "Secure hash and message digest algorithm library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -567,7 +575,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2af0a2c1ce1473461c9c366786cafe15966fa520a7c15a00b430b77984dfee11"
+content-hash = "90bb5e6717f433c74ad705cd010b7abb2aaa12de98b7dd54744ca3ce74251962"
 
 [metadata.files]
 blis = [
@@ -670,6 +678,9 @@ gensim = [
     {file = "gensim-3.8.0-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:ee338476ae4f33e496555bdc6045d6c27a23da6d7340068b6b9056769e897896"},
     {file = "gensim-3.8.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:577d01923b8b23bd970dc05b67da490d446dcdb8d7b275ab664100fe54a3428c"},
     {file = "gensim-3.8.0.tar.gz", hash = "sha256:ec5de7ff2bfa8692fa96a846bb5aae52f267fc322fbbe303c1f042d258af5766"},
+]
+hashlib = [
+    {file = "hashlib-20081119.zip", hash = "sha256:419de2fd10ae71ed9c6adcb55903f116abd1d8acc8c814dfd5f839b4d5013e38"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},

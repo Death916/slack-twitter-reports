@@ -3,6 +3,8 @@ import time
 import spacy
 import os
 import tweepy
+import shutil
+import hashlib
 """ Creating reports from samdesk alerts"""
 
 class SamReport():
@@ -22,8 +24,10 @@ class SamReport():
         self.location = "" #location of incident
         self.distance = "" #distance from incident
         self.debug_active = True
-
+        self.message_hash = "" #hash of alert_txt
+        self.last_10_hashes = [] #list of last 10 hashes
     def store_raw_alert(self, alert_txt):
+        """store raw alert text in file"""
 
         with open(self.raw_file, "a") as f:
             f.write(alert_txt + "\n")
@@ -34,7 +38,7 @@ class SamReport():
         
 
     def set_incident(self):
-     #parse alert_txt for incident type
+        """parse alert_txt for incident type"""
         for ent in self.doc.ents:
             print(ent.text, ent.label_)
             if ent.label_ == "EVENT":
@@ -55,13 +59,15 @@ class SamReport():
     def tokenize(self):
         tokens = [token.text for token in self.doc]
         stop_words = spacy.lang.en.stop_words.STOP_WORDS
-        tokens = [token for token in tokens if token not in stop_words]
+        for token in tokens:
+            if token in stop_words:
+                tokens.remove(token)
         self.tokens = tokens
         return tokens
        
-    #generate summary of alert_txt
+    
     def make_summary(self):
-        
+        '''generate summary of alert_txt'''
         
         
 
@@ -114,11 +120,14 @@ class SamReport():
         return self.inc_type
 
     def set_distance(self):
+        #select first word in alert_txt
+        self.distance = ""
+        self.distance = self.tokens[0]
+        
         for ent in self.doc.ents:
-            if ent.label_== "CARDINAL":
-                self.distance = ent.text + " "
+            
                 
-            elif ent.label_ == "ORG":
+            if ent.label_ == "ORG":
                 self.distance += ent.text
                 self.location = ent.text
                 break
@@ -130,7 +139,8 @@ class SamReport():
         return self.location
 
     def set_variables(self):
-        # helper function to set all variables
+        ''' helper function to set all variables'''
+        self.tokenize()
         self.set_incident()
         self.set_impact()
         self.set_references()
@@ -139,14 +149,99 @@ class SamReport():
         self.set_distance()
         self.set_location()
         self.make_summary()
-        self.tokenize()
+        
+        self.parse_tokens(self.tokens)
+        #self.create_message_hash()
+
                
+   
+    def parse_tokens(self, tokens):
+        '''add spaces between tokens and remove punctuation'''
+        parsed = ""
+        #list of punctuation to remove including slashes and asterisks
+        punctuation = [",", ".", "?", "!", ":", ";", "(", ")", "[", "]", "{", "}", "/", "*", "'", '"', "#", "“", "”", "\n"]
+        for token in tokens:
+            parsed += token + " "
+        for ent in self.doc.ents:
+            if ent.label_== "CARDINAL":
+                if ent.text  in parsed:
+                    parsed = parsed.replace(ent.text, "")
+
+                
+            elif ent.label_ == "ORG":
+                if ent.text in parsed:
+                    parsed = parsed.replace(ent.text, "")
+            elif ent.label_ == "PRODUCT":
+                if ent.text in parsed:
+                    parsed = parsed.replace(ent.text, "")
+                    break
+        for punc in punctuation:
+            parsed = parsed.replace(punc, "")
+        for word in parsed.split():
+            if word.lower() == "and":
+                parsed = parsed.replace(word, "\"and\"")
+        parsed = parsed.replace("  ", " ")
+        
+
+        
+        return parsed
+    
+    def archive(self):
+        '''copy raw alert to archive folder with message hash as filename'''
+
+        #create archive folder if it doesn't exist in current directory
+        if not os.path.exists("archive"):
+            os.makedirs("archive")
+        
+        message_hash = self.message_hash
+        message_hash = str(message_hash[:10])
+
+        #create archive file name
+        archive_file = "archive/" + "-" + message_hash + ".txt"
+        #check if archive file already exists
+        if os.path.exists(archive_file):
+            print("archive file already exists")
+            return False
+
+        #write raw alert to archive file
+        with open(archive_file, "w") as f:
+            f.write(self.alert_txt)
+            f.close()
+            print("archive file created")
+            
+    def  create_message_hash(self,last_10_hashes):
+        '''create list of hash of last 10 messages'''
+        #create hash of message
+        message_hash = hashlib.sha256(self.alert_txt.encode('utf-8')).hexdigest()
+        message_hash = str(message_hash[:10])
+        self.message_hash = message_hash
+        
+       
+        return message_hash
+
+
+       
+       
+                           
+    def compare_hashes(self,message_hash, last_10_hashes):
+        '''compare hash of current message to last 10 hashes'''
+        
+        if message_hash in last_10_hashes:
+            print("message already hashed")
+            return False
+        else:
+            return True
+        #the true means the message is not a duplicate
+
+
+            
 
 
     def debug(self):
         print("debugging")
         self.set_variables()
         self.store_raw_alert(self.alert_txt)
+        
 
        
         print("alert_txt: " + self.alert_txt)
@@ -161,8 +256,19 @@ class SamReport():
         print("time_stamp: " + self.time_stamp)
         print("distance: " + self.distance)
         print("location: " + self.location)
-       
-    
+        print("message_hash: " + self.message_hash)
+        # make 3 lines of -'s
+        for i in range(4):
+            print(" - - - - - - - - - - COMPLETE- - - - - - - - - - - ")
+
+        """
+        tsearch = TwitterSearch()
+        parsed = self.parse_tokens(self.tokens)
+        result = tsearch.search_twitter(parsed)
+        print("twitter result: " + result)
+        link = tsearch.create_tweet_link(result)
+        print("tweet link: " + link)
+        """
 
     def makereport(self):
         with open(self.report_file, "a") as f:
@@ -175,16 +281,20 @@ class SamReport():
             print("report completed")
 
 class TwitterSearch():
-    def __init__(self, input_txt):
+    def __init__(self):
         self.twitter_token = os.environ["twitter_token"]
         self.current_tweet_id = ""
         self.current_user_name = ""
-        self.search_term = input_txt
+        
+    
 
-    def search_twitter(self, search_term):
+    def search_twitter(self, input_txt):
+        #get first 500 characters of alert_txt
+        search_term = input_txt[30:50]
+        search_term = str(search_term)
         #search twitter for part of alert_txt and return most recent tweet. use v2 twitter api with tweepy
         client = tweepy.Client(self.twitter_token)
-        response = client.search_tweets(search_term, expansions="author_id", tweet_fields="created_at")
+        response = client.search_recent_tweets(search_term, expansions="author_id", tweet_fields="created_at")
         most_recent_username = response[0]['users'][0]['username']
         most_recent_tweet_id = response[0]['id']
         self.current_tweet_id = most_recent_tweet_id

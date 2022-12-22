@@ -18,13 +18,15 @@ app = App(token=SLACK_ALERT_SOCKET)
  
 CURRENT_MESSAGE = "hi"
 LOOP = 0
-DEBUG = False
-input = input("debug? (y/n): ")
-if input == "y":
-    DEBUG = True
-    print("debugging")
-else:
-    print("not debugging")
+DEBUG = True
+LAST_10_HASHES = []
+
+#input = input("debug? (y/n): ")
+#if input == "y":
+    #DEBUG = True
+    #print("debugging")
+#else:
+    #print("not debugging")
 
 class slack_save:
     
@@ -54,8 +56,19 @@ class slack_save:
         # store message in report file
         # alert variable set in report class by raw_alert method
         report.store_raw_alert(message)
+        hash = report.create_message_hash(LAST_10_HASHES)
+        
+        # compare hashes
+        should_archive = report.compare_hashes(hash, LAST_10_HASHES)
 
-    
+        # archive report if hashes are different
+        if should_archive == True:
+            report.archive()
+            LAST_10_HASHES.append(hash)
+            if len(LAST_10_HASHES) > 10:
+                LAST_10_HASHES.pop(0)
+
+        # debug
         if DEBUG == True:
             report.debug()
 
