@@ -30,9 +30,6 @@ LAST_10_HASHES = []
 
 class slack_save:
     
-
-   
-
     # Listen for incoming messages
     @app.event("message")
     def handle_message_events(body, **kwargs):
